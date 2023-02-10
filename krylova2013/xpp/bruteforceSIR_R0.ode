@@ -1,0 +1,47 @@
+## DIFFERENTIAL EQUATIONS:
+beta=Rzero*(gamma+mu)*(1 + a*cos(2*pi*t))
+s'=mu-beta*s*i-mu*s
+i'=beta*s*i-(gamma+mu)*i
+
+## INITIAL CONDITIONS:
+init S=0.9, I=0.001
+## PARAMETERS:
+## mean lifetime 1/mu = 50 years
+## mean infectious period 1/gamma = 13 days = 0.0356 years
+## amplitude of seasonality alpha = 0.08
+par mu=0.02, gamma=28.08, Rzero=17, a=0.08
+
+## AUXILIARY VARIABLES:
+aux R0=Rzero
+aux log10s=log10(s)
+aux log10i=log10(i)
+
+## PLOT OPTIONS:
+## xp=variable on x axis, yp=variable on y axis
+@ xp=R0, yp=log10i
+## limits on plot
+@ xlo=0, xhi=40, yhi=0, ylo=-25
+## background colour for plot
+@ back=white
+
+## POINCARE MAP SET UP:
+@ poimap=section,poivar=t,poipln=1
+
+## range set up
+@ range=1, rangeover=Rzero, rangestep=3000
+@ rangelow=0, rangehigh=30, rangereset=no
+
+## INTEGRATION OPTIONS:
+## total time of integration
+@ total=650,
+## transient time
+@ trans=600
+## time step for integration
+@ dt=0.001
+
+## STORAGE and DATA SAVING OPTIONS
+## max number of time points to store (default 5000)
+@ maxstor=2000000
+## filename for output to be saved
+@ output=bruteforceSIR_R0.dat
+done
