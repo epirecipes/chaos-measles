@@ -1,6 +1,5 @@
 using ModelingToolkit
 using OrdinaryDiffEq
-using DiffEqCallbacks
 using DataFrames
 using CSV
 
@@ -15,17 +14,24 @@ eqs = [D(S) ~ μ - β*S*I - μ*S,
 @named sys = ODESystem(eqs)
 simpsys = structural_simplify(sys)
 
+S₀ = 1/R₀
+I₀ = (μ/(μ+γ))*(1-S₀)
+u₀ = [S => S₀, I => I₀]
 p = [μ => 0.02, γ => 28.08, R₀ => 17.0, a => 0.08]
-u₀ = [S => 0.9, I => 0.001]
+
 tmin = 0.0
 tmax = 650
 transient = 600
 strobe = 1.0
 tspan = (tmin, tmax)
 R0vec = collect(1.0:0.01:30.0)
-solver = Tsit5()
+solver = RK4()
+tol = 1e-11
+maxiters = 1e7
 
-prob = ODEProblem(simpsys, u₀, tspan, p; jac=true)
+prob = ODEProblem(simpsys, u₀, tspan, p; jac=true) 
+
+# Utility functions
 
 function prob_func(prob, i, repeat)
     remake(prob, p=[μ => 0.02, γ => 28.08, R₀ => R0vec[i], a => 0.08])
@@ -41,6 +47,8 @@ function output_func(sol, i)
     return (df, false)
 end
 
+# Run ensemble
+
 ensemble_prob = EnsembleProblem(prob,
                                 prob_func = prob_func,
                                 output_func = output_func)
@@ -49,11 +57,16 @@ ensemble_prob = EnsembleProblem(prob,
                   solver,
                   EnsembleThreads(),
                   trajectories = length(R0vec);
-                  callback = PositiveDomain())
+                  maxiters = maxiters,
+                  isoutofdomain=(u,p,t) -> any(x -> x < 0, u),
+                  abstol=tol)
+
+# Output
 
 results = vcat(sim...)
-
 CSV.write("bruteforceSIR_R0.dat", results; delim=" ", header=false)
+
+# Plotting
 
 using StatsPlots
 using LaTeXStrings
